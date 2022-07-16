@@ -43,7 +43,9 @@ export function activate(context: vscode.ExtensionContext) {
       }
 
       fs.writeFile(destinationPath, binary, "base64", (error: unknown) => {
-        vscode.window.showInformationMessage(`${JSON.stringify(error)}`);
+        if (error) {
+          vscode.window.showInformationMessage(`${JSON.stringify(error)}`);
+        }
       });
     }
   );
