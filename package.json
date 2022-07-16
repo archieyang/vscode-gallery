@@ -2,8 +2,12 @@
   "name": "vscode-gallery",
   "displayName": "Gallery",
   "publisher": "archieyang",
+  "repository": {
+    "url": "https://github.com/archieyang/vscode-gallery"
+  },
+  "icon": "icon.png",
   "description": "An image management plugin for VSCode",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "engines": {
     "vscode": "^1.69.0"
   },
