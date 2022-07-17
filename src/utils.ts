@@ -9,6 +9,22 @@ export const getBase64ImageSize = (image: string): number => {
   return total;
 };
 
+export const parseBase64Image = (dataUrl: string): string | undefined => {
+  const arr = dataUrl.split(",");
+
+  if (
+    arr[0] === null ||
+    (arr[0].match(/:(.*?);/)?.length ?? 0) < 2 ||
+    (arr[0].match(/:(.*?);/)?.[1] ?? "").split("/").length < 2
+  ) {
+    return undefined;
+  }
+
+  const data = arr[1];
+
+  return data;
+};
+
 export const readableFileSize = (
   byteCount: number,
   si = true,

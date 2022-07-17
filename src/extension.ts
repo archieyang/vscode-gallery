@@ -1,34 +1,29 @@
 // The module 'vscode' contains the VS Code extensibility API
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from "vscode";
-import { getBase64ImageSize, readableFileSize } from "./utils";
+import {
+  getBase64ImageSize,
+  parseBase64Image,
+  readableFileSize,
+} from "./utils";
+import sizeOf from "image-size";
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
   const saveToFile = vscode.commands.registerCommand(
     "vscode-gallery.save",
-    (data) => {
+    (params) => {
       const {
         dataUrl,
         imageName,
         path,
-      }: { dataUrl: string; imageName: string; path: string } = data;
+        ext,
+      }: { dataUrl: string; imageName: string; path: string; ext: string } =
+        params;
 
-      const arr = dataUrl.split(",");
+      const data = parseBase64Image(dataUrl);
 
-      if (
-        arr[0] === null ||
-        (arr[0].match(/:(.*?);/)?.length ?? 0) < 2 ||
-        (arr[0].match(/:(.*?);/)?.[1] ?? "").split("/").length < 2
-      ) {
-        vscode.window.showInformationMessage(`Data format error`);
-        return;
-      }
-
-      const ext = arr[0].match(/:(.*?);/)![1].split("/")[1];
-
-      const binary = arr[1];
       const fs = require("fs");
 
       let destinationPath: string;
@@ -42,7 +37,7 @@ export function activate(context: vscode.ExtensionContext) {
         destinationPath = `${path.substring(0, path.lastIndexOf("."))}.${ext}`;
       }
 
-      fs.writeFile(destinationPath, binary, "base64", (error: unknown) => {
+      fs.writeFile(destinationPath, data, "base64", (error: unknown) => {
         if (error) {
           vscode.window.showInformationMessage(`${JSON.stringify(error)}`);
         }
@@ -97,12 +92,23 @@ export function activate(context: vscode.ExtensionContext) {
 
         const base64Image = match[0];
 
+        const data = parseBase64Image(base64Image);
+
+        if (!data) {
+          vscode.window.showInformationMessage(`Data format error`);
+          return;
+        }
+
+        const imageData = Buffer.from(data, "base64");
+        var dimensions = sizeOf(imageData);
+
         const saveCommandUri = vscode.Uri.parse(
           `command:vscode-gallery.save?${encodeURIComponent(
             JSON.stringify({
               dataUrl: base64Image,
               imageName,
               path: document.uri.path,
+              ext: dimensions.type,
             })
           )}`
         );
@@ -112,11 +118,16 @@ export function activate(context: vscode.ExtensionContext) {
             <img src="${base64Image}"/>
             <div>
               <span>
-              &nbsp; &nbsp; ${readableFileSize(getBase64ImageSize(base64Image))}
+              &nbsp;${readableFileSize(getBase64ImageSize(base64Image))}
               </span> 
               <span>
-                <a href="${saveCommandUri}">&nbsp;&nbsp;&nbsp;Save as image</a>
+              &nbsp; &nbsp; ${dimensions.width}x${dimensions.height} 
               </span> 
+              <span>
+                <a href="${saveCommandUri}">&nbsp;&nbsp;Save</a>
+              </span> 
+            </div>
+            <div>
             </div>
         </div>`
         );
